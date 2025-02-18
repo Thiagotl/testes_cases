@@ -4,10 +4,19 @@ library(tseries)
 
 source("functions.R")
 dados <- read_csv("serie_case.csv")
+
+dados<-as.data.frame(dados)
 View(dados)
 attach(dados)
+glimpse(dados)
 
-dados[,-c(1,2)] <- lapply(dados[,-c(1,2)], function(x) as.numeric(gsub("\\.", "", x)))
+#dados[,-c(1,2)] <- lapply(dados[,-c(1,2)], function(x) as.numeric(gsub("\\.", "", x)))
+# dados <- dados %>%
+#   mutate(across(-c(DRE, RAMO), ~ as.numeric(gsub("\\.", "", .)), .names = "converted_{.col}")) %>%
+#   select(DRE, RAMO, starts_with("converted_")) %>%
+#   rename_with(~ sub("converted_", "", .x))
+
+
 
 dados_ramo_A <- dados |> filter(RAMO == "A")
 
@@ -81,7 +90,6 @@ covar <- cbind(sinistralidade = sinistro$Valor / premio$Valor ,
 
 covar<-as.data.frame(covar)
 
-# Supondo que sinistralidade e comissionamento estejam no mesmo dataframe
 xreg_treino <- cbind(sinistralidade = covar$sinistralidade[1:length(ts_treino)],
                      comissionamento = covar$comissionamento[1:length(ts_treino)])
 
@@ -117,69 +125,68 @@ ggplot(dados_ramo_C_long, aes(x = Data, y = Valor, color = DRE)) +
   labs(title = "Séries Temporais do Ramo C", x = "Ano", y = "Valor") +
   theme_minimal()
 
-serie_premio_c <- dados_ramo_A_long |> 
+serie_premio_c <- dados_ramo_C_long |> 
   filter(DRE == 'Prêmio')
 
-ts_valor<-ts(serie_lucro$Valor, start = c(2018,01), frequency = 12)
-plot(ts_valor)
+ts_valor_c<-ts(serie_premio_c$Valor, start = c(2018,01), frequency = 12)
+plot(ts_valor_c)
 
 
-tend_determ(ts_valor)
+tend_determ(ts_valor_c)
 
-raiz_unit(ts_valor)
+raiz_unit(ts_valor_c)
 
-sazonalidade(ts_valor)
+sazonalidade(ts_valor_c)
 # Definir o número de observações de teste (12 meses)
 n_test <- 12
 
 # Número total de observações
-n_total <- length(ts_valor)
+n_total <- length(ts_valor_c)
 
 # Índice de separação entre treino e teste
 n_train <- n_total - n_test
 
-ts_treino <- window(ts_valor, end = c(2023, 12))  
-ts_teste <- window(ts_valor, start = c(2024, 1))  #
+ts_treino <- window(ts_valor_c, end = c(2023, 12))  
+ts_teste <- window(ts_valor_c, start = c(2024, 1))  #
 
 
 plot(ts_treino, main = "Série Temporal - Treino", col = "blue", lwd = 2)
 plot(ts_teste, main = "Série Temporal - Teste", col = "red", lwd = 2)
 
-md <- forecast::auto.arima(ts_treino)
-md
-checkresiduals(md)
-fc <- forecast(md, h=12)
-accuracy(fc,ts_teste)
-acf(residuals(md))
-pacf(residuals(md))
+md_c <- forecast::auto.arima(ts_treino)
+md_c
+checkresiduals(md_c)
+fc_c <- forecast(md_c, h=12)
+accuracy(fc_c,ts_teste)
+acf(residuals(md_c))
+pacf(residuals(md_c))
 
 
-TSstudio::test_forecast(actual = ts_valor,
-                        forecast.obj = fc,
+TSstudio::test_forecast(actual = ts_valor_c,
+                        forecast.obj = fc_c,
                         test = ts_teste)
 
 ######
 
-sinistro <- dados_ramo_A_long |> 
+sinistro_c <- dados_ramo_C_long |> 
   filter(DRE == 'Sinistro')
-premio <- dados_ramo_A_long |> 
+premio_c <- dados_ramo_C_long |> 
   filter(DRE == 'Prêmio')
-comissao<- dados_ramo_A_long |> 
+comissao_c<- dados_ramo_C_long |> 
   filter(DRE == 'Comissão')
 
 
 
-covar <- cbind(sinistralidade = sinistro$Valor / premio$Valor ,
-               comissionamento = comissao$Valor / premio$Valor)
+covar <- cbind(sinistralidade = sinistro_c$Valor / premio_c$Valor ,
+               comissionamento = comissao_c$Valor / premio_c$Valor)
 
 covar<-as.data.frame(covar)
 
-# Supondo que sinistralidade e comissionamento estejam no mesmo dataframe
 xreg_treino <- cbind(sinistralidade = covar$sinistralidade[1:length(ts_treino)],
                      comissionamento = covar$comissionamento[1:length(ts_treino)])
 
-xreg_teste <- cbind(sinistralidade = covar$sinistralidade[(length(ts_treino) + 1):length(ts_valor)],
-                    comissionamento = covar$comissionamento[(length(ts_treino) + 1):length(ts_valor)])
+xreg_teste <- cbind(sinistralidade = covar$sinistralidade[(length(ts_treino) + 1):length(ts_valor_c)],
+                    comissionamento = covar$comissionamento[(length(ts_treino) + 1):length(ts_valor_c)])
 
 
 md_xreg <- auto.arima(ts_treino, xreg = xreg_treino)
@@ -187,13 +194,13 @@ md_xreg <- auto.arima(ts_treino, xreg = xreg_treino)
 summary(md_xreg)
 fc_xreg <- forecast(md_xreg, xreg = xreg_teste, h = 12)
 
-TSstudio::test_forecast(actual = ts_valor,
+TSstudio::test_forecast(actual = ts_valor_c,
                         forecast.obj = fc_xreg,
                         test = ts_teste)
 checkresiduals(fc_xreg)
 
 
-
+md_xreg$fitted
 
 
 
