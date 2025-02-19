@@ -1,8 +1,9 @@
 library(tidyverse)
 library(forecast)
 library(tseries)
-
+library(TSstudio)
 source("functions.R")
+
 dados <- read_csv("serie_case.csv")
 
 dados<-as.data.frame(dados)
@@ -39,6 +40,7 @@ serie_lucro <- dados_ramo_A_long |>  # aqui é premio
 ts_valor<-ts(serie_lucro$Valor, start = c(2018,01), frequency = 12)
 plot(ts_valor)
 
+acf(ts_valor)
 
 tend_determ(ts_valor)
 
@@ -50,6 +52,7 @@ n_test <- 12
 
 # Número total de observações
 n_total <- length(ts_valor)
+
 
 # Índice de separação entre treino e teste
 n_train <- n_total - n_test
@@ -74,6 +77,20 @@ TSstudio::test_forecast(actual = ts_valor,
                         forecast.obj = fc,
                         test = ts_teste)
 
+
+teste_a<-auto.arima(ts_valor)
+fc_a<-forecast(teste_a, h = 12)
+
+plot(fc_a)
+
+
+
+mod_nn <- nnetar(ts_valor)
+forecast_nn <- forecast(mod_nn, h = 12)
+autoplot(forecast_nn)
+
+checkresiduals(mod_nn)
+
 ######
 
 sinistro <- dados_ramo_A_long |> 
@@ -97,7 +114,7 @@ xreg_teste <- cbind(sinistralidade = covar$sinistralidade[(length(ts_treino) + 1
                     comissionamento = covar$comissionamento[(length(ts_treino) + 1):length(ts_valor)])
 
 
-md_xreg <- auto.arima(ts_treino, xreg = xreg_treino)
+md_xreg <- auto.arima(as.numeric(ts_treino), xreg = xreg_treino)
 
 summary(md_xreg)
 fc_xreg <- forecast(md_xreg, xreg = xreg_teste, h = 12)
@@ -165,6 +182,24 @@ pacf(residuals(md_c))
 TSstudio::test_forecast(actual = ts_valor_c,
                         forecast.obj = fc_c,
                         test = ts_teste)
+
+
+
+seriediff<-diff(ts_valor_c)
+teste_c<-auto.arima(seriediff)
+
+checkresiduals(teste_c)
+
+fc_c <- forecast(teste_c, h=12)
+
+plot(fc_c)
+
+mod_nn <- nnetar(ts_valor_c)
+forecast_nn <- forecast(mod_nn, h = 12)
+autoplot(forecast_nn)
+
+
+
 
 ######
 
