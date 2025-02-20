@@ -37,6 +37,8 @@ respostas_nps <- respostas_nps |>
     segmento_do_cliente = `Segmento do Cliente`
   ) 
 
+respostas_nps <- respostas_nps |> 
+  select(-segmento_do_cliente)
 
 # JUNTANDO OS DADOS 
 
@@ -45,8 +47,25 @@ dados_unidos <- left_join(base_produtos, respostas_nps,
                           by = "CPF")
 View(dados_unidos)
 
+# CRIANDO NOVAS VARIÁVEIS  PARA ANALISE DESCRITIVA
+
 dados_unidos <- dados_unidos |> 
-  select(-c(segmento_do_cliente.y))
+  mutate(total_produtos = previdência + cartao_de_credito +
+           cheque_especial + credito_pessoal + credito_consignado +
+           cdb)
+
+# DUMMIES PARA  OS PRODUTOS
+
+dados_unidos <- dados_unidos |> 
+  mutate(dummy_previdencia = ifelse(previdência > 1,1,0),
+         dummy_cart_cred = ifelse(cartao_de_credito > 1,1,0),
+         dummy_cheq_esp = ifelse(cheque_especial>1,1,0),
+         dummy_cred_pes = ifelse(credito_pessoal>1,1,0),
+         dummy_cdb = ifelse(cdb>1,1,0),
+         dummy_cred_cons = ifelse(credito_consignado>1,1,0),
+         dummy_tot_prod = ifelse(total_produtos>1,1,0))
+
+
 
 write.csv(dados_unidos, "dados_unidos.csv", row.names = FALSE)
 
@@ -106,11 +125,12 @@ ggplot(respostas_nps, aes(x = nps_categoria, fill = nps_categoria)) +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5))  
 
-
+n_distinct((base_produtos$CPF))
+n_distinct((respostas_nps$CPF))
 
 # PENAS VERIFICANDO SE BATE COM OS DADOS QUE FORAM UNIDOS
 
-dados_unidos <- dados_unidos |> 
+dados_unidos <- dados_unidos |>
   mutate(nps_categoria = case_when(
     respostas_de_nps >= 9 ~ "Promotor",
     respostas_de_nps >= 7 ~ "Neutro",
@@ -124,6 +144,46 @@ prop.table(table(dados_unidos$nps_categoria)) * 100
 
 ggplot(dados_unidos, aes(x = nps_categoria, fill = nps_categoria)) +
   geom_bar() +
+  geom_text(stat = "count", aes(label = ..count..), vjust = -0.5, size = 3) +  
   labs(title = "Distribuição das Categorias de NPS", x = "Categoria NPS", y = "Frequência") +
-  theme_minimal()
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5)) 
+
+
+
+prop.table(table(dados_unidos$nps_categoria, dados_unidos$dummy_tot_prod), margin = 2) * 100 
+
+prop.table(table(dados_unidos$nps_categoria, dados_unidos$dummy_cdb), margin = 2) * 100 
+
+prop.table(table(dados_unidos$nps_categoria, dados_unidos$dummy_previdencia), margin = 2) * 100 
+
+prop.table(table(dados_unidos$nps_categoria, dados_unidos$dummy_cart_cred), margin = 2) * 100 
+
+prop.table(table(dados_unidos$nps_categoria, dados_unidos$dummy_cheq_esp), margin = 2) * 100 
+
+prop.table(table(dados_unidos$nps_categoria, dados_unidos$dummy_cred_pes), margin = 2) * 100 
+
+prop.table(table(dados_unidos$nps_categoria, dados_unidos$dummy_cred_cons), margin = 2) * 100 
+
+
+dados_unidos <- dados_unidos |> 
+  mutate()
+
+filter(dados_unidos$segmento_do_cliente.x == "Classic") 
+
+dados_unidos<- dados_unidos |> 
+  rename(segmento_cliente = segmento_do_cliente.x)
+
+respostas_nps |> 
+  filter(segmento_do_cliente == "Classic") |> 
+  summary(respostas_nps$Renda)
+
+respostas_nps |> 
+  filter(segmento_do_cliente == "Exclusive") |> 
+  summary(respostas_nps$Renda)
+
+
+respostas_nps |> 
+  filter(segmento_do_cliente == "Prime") |> 
+  summary(respostas_nps$Renda)
 

@@ -1,4 +1,4 @@
-"CPF","segmento_do_cliente.x","Idade","Rentabilidade","previdência","cartao_de_credito","cheque_especial","credito_pessoal","cdb","credito_consignado","respostas_de_nps","data_da_resposta","Renda","verbatim"
+"CPF","segmento_do_cliente","Idade","Rentabilidade","previdência","cartao_de_credito","cheque_especial","credito_pessoal","cdb","credito_consignado","respostas_de_nps","data_da_resposta","Renda","verbatim"
 13712691679,"Classic",33,202.9,1,1,1,0,1,1,0,2023-05-29,1373,"0"
 54767038679,"Exclusive",40,562.77,0,0,0,0,3,1,0,2024-04-10,8206,"0"
 48197232504,"Prime",32,547.16,2,2,3,0,3,2,9,2024-10-05,10463,"0"
