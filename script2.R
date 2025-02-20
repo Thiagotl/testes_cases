@@ -65,7 +65,12 @@ dados_unidos <- dados_unidos |>
          dummy_cred_cons = ifelse(credito_consignado>1,1,0),
          dummy_tot_prod = ifelse(total_produtos>1,1,0))
 
-
+# CATEGORIZAÇÃO IDADES 
+dados_unidos <- dados_unidos |> 
+  mutate(faixa_etaria = cut(Idade, 
+                            breaks = c(18, 25, 35, 45, 55), 
+                            labels = c("18-25", "26-35", "36-45", "46-55"),
+                            right = TRUE))
 
 write.csv(dados_unidos, "dados_unidos.csv", row.names = FALSE)
 
@@ -166,24 +171,12 @@ prop.table(table(dados_unidos$nps_categoria, dados_unidos$dummy_cred_pes), margi
 prop.table(table(dados_unidos$nps_categoria, dados_unidos$dummy_cred_cons), margin = 2) * 100 
 
 
-dados_unidos <- dados_unidos |> 
-  mutate()
+prop.table(table(dados_unidos$nps_categoria, dados_unidos$faixa_etaria), margin = 2) * 100 
 
-filter(dados_unidos$segmento_do_cliente.x == "Classic") 
+prop.table(table(dados_unidos$faixa_etaria)) * 100
 
-dados_unidos<- dados_unidos |> 
-  rename(segmento_cliente = segmento_do_cliente.x)
-
-respostas_nps |> 
+dados_unidos |> 
   filter(segmento_do_cliente == "Classic") |> 
   summary(respostas_nps$Renda)
 
-respostas_nps |> 
-  filter(segmento_do_cliente == "Exclusive") |> 
-  summary(respostas_nps$Renda)
-
-
-respostas_nps |> 
-  filter(segmento_do_cliente == "Prime") |> 
-  summary(respostas_nps$Renda)
 
