@@ -238,7 +238,38 @@ checkresiduals(fc_xreg)
 md_xreg$fitted
 
 
+######
 
+
+
+
+dados_ramo_B <- dados |> filter(RAMO == "B")
+
+dados_ramo_B_long <- dados_ramo_B |>  
+  pivot_longer(
+    cols = -c(DRE, RAMO), 
+    names_to = "Data", 
+    values_to = "Valor"
+  )  |>  
+  mutate(Data = as.Date(paste0(Data, "-01"), format = "%Y-%m-%d"))
+
+ggplot(dados_ramo_B_long, aes(x = Data, y = Valor, color = DRE)) +
+  geom_line() +
+  labs(title = "Séries Temporais do Ramo B", x = "Ano", y = "Valor") +
+  theme_minimal()
+
+serie_premio_b <- dados_ramo_B_long |> 
+  filter(DRE == 'Prêmio')
+
+ts_valor_b<-ts(serie_premio_b$Valor, start = c(2018,01), frequency = 12)
+plot(ts_valor_b)
+
+
+tend_determ(ts_valor_b)
+
+raiz_unit(ts_valor_b)
+
+sazonalidade(ts_valor_b)
 
 
 
